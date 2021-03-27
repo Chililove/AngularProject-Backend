@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ChatClient } from './chat-client.model';
-import { ChatMessage } from './chat-message.model';
+import { ChatClient } from '../models/chat-client.model';
+import { ChatMessage } from '../models/chat-message.model';
+import { IChatService } from '../primary-ports/chat.service.interface';
 
 @Injectable()
-export class ChatService {
+export class ChatService implements IChatService {
   allMessages: ChatMessage[] = [];
   clients: ChatClient[] = [];
 
@@ -21,7 +22,7 @@ export class ChatService {
     if (chatClient) {
       return chatClient;
     }
-    if (this.clients.find((c) => (c.nickname === nickname))) {
+    if (this.clients.find((c) => c.nickname === nickname)) {
       throw new Error('Nickname already in use');
     }
     chatClient = { id: id, nickname: nickname };
@@ -43,7 +44,8 @@ export class ChatService {
 
   updateTyping(typing: boolean, id: string): ChatClient {
     const chatClient = this.clients.find((c) => c.id == id);
-    if(chatClient && chatClient.typing !== typing) {
+    // not sure I understand line 50... --------------------------------------------------------------------------!!
+    if (chatClient && chatClient.typing !== typing) {
       chatClient.typing = typing;
       return chatClient;
     }

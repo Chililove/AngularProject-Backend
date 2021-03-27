@@ -1,19 +1,23 @@
 import {
   ConnectedSocket,
-  MessageBody, OnGatewayConnection, OnGatewayDisconnect,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { ChatService } from './shared/chat.service';
-import { WelcomeDto } from './shared/welcome.dto';
-import { tryCatch } from 'rxjs/internal-compatibility';
+import { ChatService } from '../core/services/chat.service';
+import { WelcomeDto } from './dtos/welcome.dto';
+import { IChatService, IChatServiceProvider } from "../core/primary-ports/chat.service.interface";
+import { Inject } from "@nestjs/common";
 
 @WebSocketGateway()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private chatService: ChatService) {}
-
+  constructor(
+    @Inject(IChatServiceProvider) private chatService: IChatService,
+  ) {}
   @WebSocketServer() server;
   @SubscribeMessage('message')
   handleChatEvent(
@@ -53,10 +57,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: Socket, ...args: any[]): any {
     client.emit('allMessages', this.chatService.getMessages());
     this.server.emit('clients', this.chatService.getClients());
+    // this.server.emit('clients', Array.from(this.chatService.getClients()));
   }
 
   handleDisconnect(client: Socket): any {
     this.chatService.deleteClient(client.id);
     this.server.emit('clients', this.chatService.getClients());
+    // this.server.emit('clients', Array.from(this.chatService.getClients()));
+    console.log('disconnected', this.chatService.getClients());
   }
 }
